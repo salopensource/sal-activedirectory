@@ -52,7 +52,7 @@ AUTH_LDAP_SERVER_URI = 'ldaps://hostname.company.com:636'
 ## AUTH_LDAP_USER_DOMAIN
 Domain of the AD/LDAP server.
 ```Python
-AUTH_LDAP_USER_DOMAIN = company.com’
+AUTH_LDAP_USER_DOMAIN = 'company.com'
 ```
 `username` will be converted to `username@company.com` (company.com = `AUTH_LDAP_USER_DOMAIN`) for the AD/LDAP authentication. The domain will only get appended to the username if the username does **not** end with the configured domain.
 
