@@ -56,10 +56,18 @@ AUTH_LDAP_USER_DOMAIN = company.com’
 ```
 `username` will be converted to `username@company.com` (company.com = `AUTH_LDAP_USER_DOMAIN`) for the AD/LDAP authentication. The domain will only get appended to the username if the username does **not** end with the configured domain.
 
-## AUTH_LDAP_USER_SEARCH (mandatory)
+### AUTH_LDAP_USER_SEARCH (mandatory)
+
 AD/LDAP search base for the user object.
+
 ```Python
 AUTH_LDAP_USER_SEARCH = 'DC=department,DC=ads,DC=company,DC=com'
+```
+
+It is possible to specify more than one base dn. In this case, the first valid one is taken.
+
+```Python
+AUTH_LDAP_USER_SEARCH = ('DC=ch,DC=ads,DC=company,DC=com', 'DC=uk,DC=ads,DC=company,DC=com', 'DC=us,DC=ads,DC=company,DC=com')
 ```
 
 ## AUTH_LDAP_USER_ATTR_MAP
@@ -90,10 +98,10 @@ AUTH_LDAP_USER_PREFIX = 'ldap_'
 Mapping of the user profile level (`GA` = Global Admin, `RW` = Read & Write, `RO` = Read Only, `SO` = Stats Only (*not implemented in SAL*)) to AD/LDAP groups. Mapping is a dictionary, where the key is the user profile level and the value corresponds to the AD/LDAP group. The group can be a single group or a list/tuple of AD/LDAP groups.
 ```Python
 AUTH_LDAP_USER_PROFILE = {
-                            'RO': ('CN=users-all,DC=department,DC=ad,DC=company,DC=com',),
-                            'RW': ('CN=service-desk,DC=department,DC=ad,DC=company,DC=com',
-                                   'CN=group-leader,OU=group,DC=department,DC=ad,DC=company,DC=com'),
-                            'GA': 'CN=admin,DC=department,DC=ad,DC=company,DC=com',
+                            'RO': ('CN=all-users,OU=it,DC=ad,DC=company,DC=com',),
+                            'RW': ('CN=service-desk,OU=it,DC=ad,DC=company,DC=com',
+                                   'CN=mac-admins,OU=it,DC=ad,DC=company,DC=com'),
+                            'GA': 'CN=admins,DC=it,DC=ad,DC=company,DC=com',
                         }
 ```
 The order of the user profile check is from `GA` to `RO` respectively `SO`. If a user is member of the `GA` **and** `RO` group, the assigned user profile level is `GA`.
@@ -102,11 +110,11 @@ The order of the user profile check is from `GA` to `RO` respectively `SO`. If a
 Mapping of AD/LDAP groups to business units. Mapping is a dictionary, where the key is the name of the business unit and the value corresponds to the AD/LDAP group. The group can be a single group or a list/tuple of AD/LDAP groups.
 ```Python
 AUTH_LDAP_USER_TO_BUSINESS_UNIT = {
-                            '#ALL_BU':          ('CN=service-desk,DC=department,DC=ad,DC=company,DC=com',
-                                                 'CN=group-leader,DC=department,DC=ad,DC=company,DC=com',),
-                            'BusinessUnitU1':   ('CN=group-member,OU=group1,DC=department,DC=ad,DC=company,DC=com',),
-                            'BusinessUnitU1':   ('CN=group-member,OU=group2,DC=department,DC=ad,DC=company,DC=com',),
-                            'BusinessUnitU3':    'CN=group-member,OU=group3,DC=department,DC=ad,DC=company,DC=com',
+                            '#ALL_BU': ('CN=service-desk,OU=it,DC=ad,DC=company,DC=com',
+                                        'CN=sysadmins,OU=it,DC=ad,DC=company,DC=com',),
+                            'CH':      ('CN=mac-admins,OU=it,DC=ch,DC=ad,DC=company,DC=com',),
+                            'UK':      ('CN=mac-admins,OU=it,DC=uk,DC=ad,DC=company,DC=com',),
+                            'US':       'CN=mac-admins,OU=it,DC=us,DC=ad,DC=company,DC=com',
                         }
 ```
 **Attention**: `#ALL_BU` is a special business unit. All users in this configured groups get access to all existing business units.
@@ -167,3 +175,13 @@ There are always things which can be improved!
 * **Bind with service account**. At the moment the AD/LDAP connection is initiated with the authenticated user. It could be that this user does not have the permissions to access the group memberships. Therefore AD/LDAP bind with a service account could be very useful.
 * **Make it work with other ldap implementations than AD/LDAP**. At the moment, this authentication works with AD/LDAP only. May be someone can test and adapt it for other ldap implementation as well. Note: Take care of the nested groups.
 
+# Versions
+
+## 1.0.1
+
+- [Support multiple user scopes](https://github.com/haribert/sal-ActiveDirectory/issues/1)
+- Documentation update
+
+## 1.0.0
+
+- Initial Version

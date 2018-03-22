@@ -56,7 +56,13 @@ AUTH_LDAP_USER_DOMAIN = company.com’
 AD/LDAP search base for the user object.
 
 ```Python
-AUTH_LDAP_USER_SEARCH = 'DC=department,DC=ads,DC=company,DC=com'
+AUTH_LDAP_USER_SEARCH = 'DC=it,DC=ads,DC=company,DC=com'
+```
+
+It is possible to specify more than one base dn. In this case, the first valid one is taken.
+
+```Python
+AUTH_LDAP_USER_SEARCH = ('DC=ch,DC=ads,DC=company,DC=com', 'DC=uk,DC=ads,DC=company,DC=com', 'DC=us,DC=ads,DC=company,DC=com')
 ```
 
 ### AUTH_LDAP_USER_ATTR_MAP
@@ -95,10 +101,10 @@ Mapping of the user profile level (`GA` = Global Admin, `RW` = Read & Write, `RO
 
 ```Python
 AUTH_LDAP_USER_PROFILE = {
-                            'RO': ('CN=users-all,DC=department,DC=ad,DC=company,DC=com',),
-                            'RW': ('CN=service-desk,DC=department,DC=ad,DC=company,DC=com',
-                                   'CN=group-leader,OU=group,DC=department,DC=ad,DC=company,DC=com'),
-                            'GA': 'CN=admin,DC=department,DC=ad,DC=company,DC=com',
+                            'RO': ('CN=all-users,OU=it,DC=ad,DC=company,DC=com',),
+                            'RW': ('CN=service-desk,OU=it,DC=ad,DC=company,DC=com',
+                                   'CN=mac-admins,OU=it,DC=ad,DC=company,DC=com'),
+                            'GA': 'CN=admins,DC=it,DC=ad,DC=company,DC=com',
                         }
 ```
 
@@ -110,11 +116,11 @@ Mapping of AD/LDAP groups to business units. Mapping is a dictionary, where the 
 
 ```Python
 AUTH_LDAP_USER_TO_BUSINESS_UNIT = {
-                            '#ALL_BU':          ('CN=service-desk,DC=department,DC=ad,DC=company,DC=com',
-                                                 'CN=group-leader,DC=department,DC=ad,DC=company,DC=com',),
-                            'BusinessUnitU1':   ('CN=group-member,OU=group1,DC=department,DC=ad,DC=company,DC=com',),
-                            'BusinessUnitU1':   ('CN=group-member,OU=group2,DC=department,DC=ad,DC=company,DC=com',),
-                            'BusinessUnitU3':    'CN=group-member,OU=group3,DC=department,DC=ad,DC=company,DC=com',
+                            '#ALL_BU': ('CN=service-desk,OU=it,DC=ad,DC=company,DC=com',
+                                        'CN=sysadmins,OU=it,DC=ad,DC=company,DC=com',),
+                            'CH':      ('CN=mac-admins,OU=it,DC=ch,DC=ad,DC=company,DC=com',),
+                            'UK':      ('CN=mac-admins,OU=it,DC=uk,DC=ad,DC=company,DC=com',),
+                            'US':       'CN=mac-admins,OU=it,DC=us,DC=ad,DC=company,DC=com',
                         }
 ```
 
@@ -194,11 +200,21 @@ There are always things which can be improved!
 * **Bind with service account**. At the moment the AD/LDAP connection is initiated with the authenticated user. It could be that this user does not have the permissions to access the group memberships. Therefore AD/LDAP bind with a service account could be very useful.
 * **Make it work with other ldap implementations than AD/LDAP**. At the moment, this authentication works with AD/LDAP only. May be someone can test and adapt it for other ldap implementation as well. Note: Take care of the nested groups.
 
+# Versions
+
+## 1.0.1
+
+- [Support multiple user scopes](https://github.com/haribert/sal-ActiveDirectory/issues/1)
+- Documentation update
+
+## 1.0.0
+
+- Initial Version
 """
 
 __author__ = "Basil Neff"
 __email__ = "basil.neff@unibas.ch"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 
 
@@ -255,13 +271,26 @@ class ADConnector:
             self.logger.debug(ex)
             return None
 
-        # Get Ldap User Object
-        ldap_user_fields = self.__get_user_from_ldap(ldap_connection, username)
+        # Check if AUTH_LDAP_USER_SEARCH is a list
+        if not isinstance(settings.AUTH_LDAP_USER_SEARCH, (list, tuple)):  # Check if it is a list, otherwise convert to list
+            self.logger.debug('Given setting for AUTH_LDAP_USER_SEARCH is not a list (%s), convert it to a list.' % type(settings.AUTH_LDAP_USER_SEARCH))
+            settings.AUTH_LDAP_USER_SEARCH = (settings.AUTH_LDAP_USER_SEARCH,)  # trailing comma: https://wiki.python.org/moin/TupleSyntax
+
+        # Get Ldap User Object from ldap_base
+        ldap_user_fields = None
+        base_dn = None
+        for ldap_base in settings.AUTH_LDAP_USER_SEARCH:
+            ldap_user_fields = self.__get_user_from_ldap(ldap_connection, username, ldap_base=ldap_base)
+            if ldap_user_fields is None:
+                self.logger.info('Could not get ldap user with username %s in base_dn %s.' % (username, ldap_base))
+            else:
+                self.logger.debug('User %s from ldap in base_dn %s received.' % (username, ldap_base))
+                base_dn = ldap_base
+                break
+
         if ldap_user_fields is None:
-            self.logger.error('Could not get ldap user with username %s. User therefore not authorized!' % username)
+            self.logger.error('Could not get ldap user with username %s in any of the configured AUTH_LDAP_USER_SEARCH. User therefore not authorized!' % username)
             return None
-        else:
-            self.logger.debug('User %s from ldap received.' % (username))
 
         try:
             ldap_username = ldap_user_fields[settings.AUTH_LDAP_USER_ATTR_MAP['username']][0]
@@ -324,7 +353,7 @@ class ADConnector:
                 user_profile_groups = (user_profile_groups,)  # trailing comma: https://wiki.python.org/moin/TupleSyntax
 
             for group in user_profile_groups:
-                if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group):
+                if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group, ldap_base=base_dn):
                     self.logger.debug('User %s is member of GA group %s' % (ldap_username, group))
                     self.__set_userprofile(username_django, 'GA')
                     user_profile = 'GA'
@@ -334,7 +363,7 @@ class ADConnector:
                     self.logger.debug('User profile to "GA" = Global Admin set. Do not check for other profiles anymore.')
                     break
             if user_profile is None:
-                self.logger.debug('User %s is not part of a GA group.' % ldap_username)
+                self.logger.debug('User %s is not part of any GA group.' % ldap_username)
         else:
             self.logger.debug('No ldap group for user profile "GA" defined in settings.')
 
@@ -353,14 +382,14 @@ class ADConnector:
                 user_profile_groups = (user_profile_groups,)  # trailing comma: https://wiki.python.org/moin/TupleSyntax
 
             for group in user_profile_groups:
-                if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group):
+                if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group, ldap_base=base_dn):
                     self.logger.debug('User %s is member of RW group %s' % (ldap_username, group))
                     self.__set_userprofile(username_django, 'RW')
                     user_profile = 'RW'
                     self.logger.debug('User profile to "RW" = "Read Write" set. Do not check for other profiles anymore.')
                     break
             if user_profile is None:
-                self.logger.debug('User %s is not part of a RW group.' % ldap_username)
+                self.logger.debug('User %s is not part of any RW group.' % ldap_username)
         else:
             self.logger.debug('No ldap group for user profile "RW" defined in settings OR user profile already set to GA.')
 
@@ -378,14 +407,14 @@ class ADConnector:
                 user_profile_groups = (user_profile_groups,)  # trailing comma: https://wiki.python.org/moin/TupleSyntax
 
             for group in user_profile_groups:
-                if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group):
+                if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group, ldap_base=base_dn):
                     self.logger.debug('User %s is member of RO group %s' % (ldap_username, group))
                     self.__set_userprofile(username_django, 'RO')
                     user_profile = 'RO'
                     self.logger.debug('User profile to "RO" = "Read Only" set. Do not check for other profiles anymore.')
                     break
             if user_profile is None:
-                self.logger.debug('User %s is not part of a RO group.' % ldap_username)
+                self.logger.debug('User %s is not part of any RO group.' % ldap_username)
         else:
             self.logger.debug('No ldap group for user profile "RO" defined in settings OR user profile already set to GA or RW.')
 
@@ -403,14 +432,14 @@ class ADConnector:
                 user_profile_groups = (user_profile_groups,)  # trailing comma: https://wiki.python.org/moin/TupleSyntax
 
             for group in user_profile_groups:
-                if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group):
+                if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group, ldap_base=base_dn):
                     self.logger.debug('User %s is member of SO group %s' % (ldap_username, group))
                     self.__set_userprofile(username_django, 'SO')
                     user_profile = 'SO'
                     self.logger.debug('User profile to "SO" = "Stats Only" set. Do not check for other profiles anymore.')
                     break
             if user_profile is None:
-                self.logger.debug('User %s is not part of a SO group.')
+                self.logger.debug('User %s is not part of any SO group.')
         else:
             self.logger.debug('No ldap group for user profile "SO" defined in settings OR user profile already set to GA, RW or RO.')
 
@@ -451,7 +480,7 @@ class ADConnector:
                         settings.AUTH_LDAP_USER_TO_BUSINESS_UNIT[business_unit] = (settings.AUTH_LDAP_USER_TO_BUSINESS_UNIT[business_unit],)
                     for group in settings.AUTH_LDAP_USER_TO_BUSINESS_UNIT[business_unit]: # Loop over groups
                         self.logger.debug('Check if user %s is in ldap group %s.' % (ldap_username, group))
-                        if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group):
+                        if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group, ldap_base=base_dn):
                             self.logger.debug('User %s is member of group %s, assign user to all existing business units!' % (ldap_username, group))
                             for one_of_all_business_units in all_business_units:
                                 self.logger.debug('Assign business unit %s to user %s with access to all existing business units.' % (one_of_all_business_units, username_django))
@@ -468,7 +497,7 @@ class ADConnector:
                         settings.AUTH_LDAP_USER_TO_BUSINESS_UNIT[business_unit] = (settings.AUTH_LDAP_USER_TO_BUSINESS_UNIT[business_unit],)
                     for group in settings.AUTH_LDAP_USER_TO_BUSINESS_UNIT[business_unit]: # Loop over groups
                         self.logger.debug('Check if user %s is in ldap group %s.' % (ldap_username, group))
-                        if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group):
+                        if self.__is_user_member_of_ldap_group(ldap_connection=ldap_connection, username=ldap_username, group_dn=group, ldap_base=base_dn):
                             self.logger.debug('User %s is member of group %s, assign user to business unit %s' % (ldap_username, group, business_unit))
                             self.__add_user_to_business_unit(username_django, business_unit) # Assign user to business unit
                             user_business_units.append(business_unit)
@@ -509,10 +538,10 @@ class ADConnector:
             raise ex
 
 
-    def __get_user_from_ldap(self, ldap_connection, username, ldap_base = settings.AUTH_LDAP_USER_SEARCH):
+    def __get_user_from_ldap(self, ldap_connection, username, ldap_base):
         """
         Returns a dictionary with all fields stored in ldap.
-        Username can be uid (neffba00) or email (basil.neff@unibas.ch)
+        Username can be uid (username) or email (firstname.lastname@company.com)
         If no user is found, the function returns None.
 
         Args:
@@ -552,7 +581,7 @@ class ADConnector:
             ldap_result = ldap_connection.search_s(ldap_base, searchScope, searchFilter)
             self.logger.debug('LDAP search result: %s' % ldap_result)
             if ldap_result is None:
-                self.logger.warn('Could not find user %s in ldap.' % username)
+                self.logger.warn('Could not find user %s in ldap with base_dn %s.' % (username, ldap_base))
                 return None
 
             for entry in ldap_result:
@@ -567,13 +596,13 @@ class ADConnector:
             return None
 
         if user_fields is None:
-            self.logger.warn['Could not get fields from ldap for user %s.' % username]
+            self.logger.warn('Could not get fields from ldap for user %s.' % username)
             return None
 
         self.logger.debug('User %s has following ldap fields: %s' % (username, user_fields))
         return user_fields
 
-    def __is_user_member_of_ldap_group(self, ldap_connection, username, group_dn, ldap_base = settings.AUTH_LDAP_USER_SEARCH):
+    def __is_user_member_of_ldap_group(self, ldap_connection, username, group_dn, ldap_base):
         """
         Checks if the given user is member of the given ldap group dn.
         Search is done recursive.

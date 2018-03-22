@@ -62,8 +62,10 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 AUTH_LDAP_SERVER_URI = 'ldaps://hostname.company.com:636'
-AUTH_LDAP_USER_DOMAIN = ‘company.com’
-AUTH_LDAP_USER_SEARCH = 'DC=department,DC=ads,DC=company,DC=com'
+AUTH_LDAP_USER_DOMAIN = 'company.com'
+AUTH_LDAP_USER_SEARCH = ('DC=ch,DC=ads,DC=company,DC=com',
+                         'DC=uk,DC=ads,DC=company,DC=com',
+                         'DC=us,DC=ads,DC=company,DC=com')
 AUTH_LDAP_USER_ATTR_MAP = {
     "username": "sAMAccountName",
     "first_name": "givenName",
@@ -80,9 +82,10 @@ AUTH_LDAP_USER_PROFILE = {
                             'GA': 'CN=admin,DC=department,DC=ad,DC=company,DC=com',
                         }
 
-AUTH_LDAP_USER_PROFILE = {
-                            'RO': ('CN=users-all,DC=department,DC=ad,DC=company,DC=com',),
-                            'RW': ('CN=service-desk,DC=department,DC=ad,DC=company,DC=com',
-                                   'CN=group-leader,OU=group,DC=department,DC=ad,DC=company,DC=com'),
-                            'GA': 'CN=admin,DC=department,DC=ad,DC=company,DC=com',
+AUTH_LDAP_USER_TO_BUSINESS_UNIT = {
+                            '#ALL_BU': ('CN=service-desk,OU=it,DC=ad,DC=company,DC=com',
+                                        'CN=sysadmins,OU=it,DC=ad,DC=company,DC=com',),
+                            'CH':      ('CN=mac-admins,OU=it,DC=ch,DC=ad,DC=company,DC=com',),
+                            'UK':      ('CN=mac-admins,OU=it,DC=uk,DC=ad,DC=company,DC=com',),
+                            'US':       'CN=mac-admins,OU=it,DC=us,DC=ad,DC=company,DC=com',
                         }
