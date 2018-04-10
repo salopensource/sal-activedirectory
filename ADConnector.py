@@ -46,7 +46,7 @@ AUTH_LDAP_SERVER_URI = 'ldaps://hostname.company.com:636'
 Domain of the AD/LDAP server.
 
 ```Python
-AUTH_LDAP_USER_DOMAIN = company.com’
+AUTH_LDAP_USER_DOMAIN = 'company.com'
 ```
 
 `username` will be converted to `username@company.com` (company.com = `AUTH_LDAP_USER_DOMAIN`) for the AD/LDAP authentication. The domain will only get appended to the username if the username does **not** end with the configured domain.
@@ -266,7 +266,7 @@ class ADConnector:
             self.__ldap_bind(ldap_connection=ldap_connection, username=username_ldap_bind, password=password)
         except Exception as ex:
             self.logger.error('Could not bind to ldap (%s) as user %s. User therefore not authenticated.' %
-                              (settings.AUTH_LDAP_SERVER_URI, username))
+                              (settings.AUTH_LDAP_SERVER_URI, username_ldap_bind))
             self.logger.info('Bind exception message: %s' % ex.message)
             self.logger.debug(ex)
             return None
