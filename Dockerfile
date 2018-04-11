@@ -1,4 +1,4 @@
-FROM macadmins/sal:3.2.14
+FROM macadmins/sal:3.3.1
 
 MAINTAINER Balz Aschwanden <balz.aschwanden@unibas.ch>
 
