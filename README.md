@@ -1,20 +1,20 @@
 # MS Active Directory (AD) Connector
 > ActiveDirectory/LDAP authentication backend extension for Sal with ldap group to business unit mapping.
 
-This docker container extends [Sal](https://github.com/salopensource/sal) by adding a django authentication
+This docker container extends [Sal](https://github.com/salopensource/sal) by adding a Django authentication
 backend with ActiveDirectory/LDAP integration.
 
 Currently, this connector works with MS ActiveDirectory/LDAP only.
 
 # Features
-* Binding to the configured AD/LDAP server with username and password from the SAL/django user login.
-* Creating a Sal/django user with field information from AD/LDAP (no password is stored in django!)
+* Binding to the configured AD/LDAP server with username and password from the Sal/Django user login.
+* Creating a Sal/Django user with field information from AD/LDAP (no password is stored in Django!)
 * Setting Sal user profile (GA, RW, RO) based on their AD/LDAP group.
 * Assigning users to Sal business units based on their AD/LDAP group.
 * Updating the user profile and business unit assignment at every login of the user.
 
 # Docker Setup
-The setup is idantical to a standard Sal docker container as described in the [SAL Wiki](https://github.com/salopensource/sal/wiki/Docker).
+The setup is idantical to a standard Sal docker container as described in the [Sal Wiki](https://github.com/salopensource/sal/wiki/Docker).
 In addition you have to link your `settings.py` into the container.
 
 ```bash
@@ -30,7 +30,7 @@ $ docker run -d --name="sal"\
 ```
 
 # Settings
-Following settings can/need to be configured in the django `settings.py` file to get this ActiveDirectory authentication backend to work.
+Following settings can/need to be configured in the Django `settings.py` file to get this ActiveDirectory authentication backend to work.
 See the `settings_example.py` for guidance.
 
 ## AUTHENTICATION_BACKENDS (important)
@@ -82,7 +82,7 @@ AUTH_LDAP_USER_ATTR_MAP = {
 ```
 
 ## AUTH_LDAP_TRUST_ALL_CERTIFICATES
-If you have a self signed certificate or an unknown certificate to the django server, you need to disable the certificate check by setting this value to `True`.
+If you have a self signed certificate or an unknown certificate to the Django server, you need to disable the certificate check by setting this value to `True`.
 ```Python
 AUTH_LDAP_TRUST_ALL_CERTIFICATES = True
 ```
@@ -120,7 +120,7 @@ AUTH_LDAP_USER_TO_BUSINESS_UNIT = {
 **Attention**: `#ALL_BU` is a special business unit. All users in this configured groups get access to all existing business units.
 
 # Logging
-If something does not work as expected, an extensive debug logging can be turned on. This is implemented with the python logging module and can be configured in the django settings.
+If something does not work as expected, an extensive debug logging can be turned on. This is implemented with the python logging module and can be configured in the Django settings.
 ```Python
 LOGGING = {
     'version': 1,
@@ -153,7 +153,7 @@ With this configuration everything is logged to `/tmp/sal.log`. Make sure that y
 # FAQ
 ## Can existing Django users with identical usernames coexist with new AD/LDAP users?
 Yes: This can be accomplished with the setting `AUTH_LDAP_USER_PREFIX` very easily.
-This configured prefix will be added to the django username, therefore existing Django users with the same username as users in the AD/LDAP can still login.
+This configured prefix will be added to the Django username, therefore existing Django users with the same username as users in the AD/LDAP can still login.
 ## Is it possible to have a user with readonly rights in specific business unit and with write rights in a different one?
 No: Unfortunately this is not possible by design of Sal. A user does always have **one** user profile which is valid for all assigned business unit.
 ## What happens if the authenticated user is not in any of the configured user profiles (GA, RW, RO)?
@@ -176,11 +176,11 @@ There are always things which can be improved!
 
 # Versions
 
-## 1.0.1
+The version is identical with the version of Sal in the Dockerfile. This version of Sal is tested and proved to work with the given AD/LDAP authentication. 
 
+It could be that new authentication features get introduced between different version. See the changelog below for details.
+
+## 3.2.14
+- Sal version 3.2.14 in docker container
 - [Support multiple user scopes](https://github.com/haribert/sal-ActiveDirectory/issues/1)
 - Documentation update
-
-## 1.0.0
-
-- Initial Version

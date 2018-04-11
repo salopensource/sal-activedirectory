@@ -2,13 +2,13 @@
 """
 # MS Active Directory (AD) Authentication
 
-> ActiveDirectory/LDAP authentication backend for SAL with ldap group to business unit mapping.
+> ActiveDirectory/LDAP authentication backend for Sal with ldap group to business unit mapping.
 
-This class is a django authentication backend with ActiveDirectory/LDAP integration for [SAL](https://github.com/salopensource).
-* It binds to the configured AD/LDAP server with username and password from the SAL/django user login.
-* Creates a SAL/django user with field information from AD/LDAP (no password is stored in django!)
-* Sets SAL user profile (GA, RW, RO) based on their AD/LDAP group.
-* Assigns users to SAL business units based on their AD/LDAP group.
+This class is a Django authentication backend with ActiveDirectory/LDAP integration for [Sal](https://github.com/salopensource).
+* It binds to the configured AD/LDAP server with username and password from the Sal/Django user login.
+* Creates a Sal/Django user with field information from AD/LDAP (no password is stored in Django!)
+* Sets Sal user profile (GA, RW, RO) based on their AD/LDAP group.
+* Assigns users to Sal business units based on their AD/LDAP group.
 * Updates the user profile and business unit assignment at every login of the user.
 
 ## Requirements
@@ -17,7 +17,7 @@ This class is a django authentication backend with ActiveDirectory/LDAP integrat
 
 ## Settings
 
-Following settings can/need to be configured in the django `settings.py` file to get this ActiveDirectory authentication backend to work.
+Following settings can/need to be configured in the Django `settings.py` file to get this ActiveDirectory authentication backend to work.
 
 ### AUTHENTICATION_BACKENDS (important)
 
@@ -67,7 +67,7 @@ AUTH_LDAP_USER_SEARCH = ('DC=ch,DC=ads,DC=company,DC=com', 'DC=uk,DC=ads,DC=comp
 
 ### AUTH_LDAP_USER_ATTR_MAP
 
-Mapping of the AD/LDAP attributes to django attributes. If these settings are not configured, these default values are used.
+Mapping of the AD/LDAP attributes to Django attributes. If these settings are not configured, these default values are used.
 
 ```Python
 AUTH_LDAP_USER_ATTR_MAP = {
@@ -80,7 +80,7 @@ AUTH_LDAP_USER_ATTR_MAP = {
 
 ### AUTH_LDAP_TRUST_ALL_CERTIFICATES
 
-If you have a self signed certificate or an unknown certificate to the django server, you need to disable the certificate check by setting this value to `True`.
+If you have a self signed certificate or an unknown certificate to the Django server, you need to disable the certificate check by setting this value to `True`.
 ```Python
 AUTH_LDAP_TRUST_ALL_CERTIFICATES = True
 ```
@@ -89,7 +89,7 @@ The parameter defaults to `False`, causing sal to trust certificates with a vali
 
 ### AUTH_LDAP_USER_PREFIX
 
-Django users that where created via AD/LDAP recieve the ldap_ preffix. (`username` becomes `ldap_username`). This allows to have local django users and AD/LDAP users in coexistence. Furthermore, local django users and AD/LDAP users are distinguished very easy.
+Django users that where created via AD/LDAP recieve the ldap_ preffix. (`username` becomes `ldap_username`). This allows to have local Django users and AD/LDAP users in coexistence. Furthermore, local Django users and AD/LDAP users are distinguished very easy.
 
 ```Python
 AUTH_LDAP_USER_PREFIX = 'ldap_'
@@ -97,7 +97,7 @@ AUTH_LDAP_USER_PREFIX = 'ldap_'
 
 ### AUTH_LDAP_USER_PROFILE (important)
 
-Mapping of the user profile level (`GA` = Global Admin, `RW` = Read & Write, `RO` = Read Only, `SO` = Stats Only (*not implemented in SAL*)) to AD/LDAP groups. Mapping is a dictionary, where the key is the user profile level and the value corresponds to the AD/LDAP group. The group can be a single group or a list/tuple of AD/LDAP groups.
+Mapping of the user profile level (`GA` = Global Admin, `RW` = Read & Write, `RO` = Read Only, `SO` = Stats Only (*not implemented in Sal*)) to AD/LDAP groups. Mapping is a dictionary, where the key is the user profile level and the value corresponds to the AD/LDAP group. The group can be a single group or a list/tuple of AD/LDAP groups.
 
 ```Python
 AUTH_LDAP_USER_PROFILE = {
@@ -128,7 +128,7 @@ AUTH_LDAP_USER_TO_BUSINESS_UNIT = {
 
 ## Logging
 
-If something does not work as expected, an extensive debug logging can be turned on. This is implemented with the python logging module and can be configured in the django settings.
+If something does not work as expected, an extensive debug logging can be turned on. This is implemented with the python logging module and can be configured in the Django settings.
 
 ```Python
 LOGGING = {
@@ -161,14 +161,14 @@ With this configuration everything is logged to `/tmp/sal.log`. Make sure that y
 
 ## FAQ
 
-### Can existing django users with identical usernames coexist with new AD/LDAP users?
+### Can existing Django users with identical usernames coexist with new AD/LDAP users?
 
 Yes: This can be accomplished with the setting `AUTH_LDAP_USER_PREFIX` very easily.
-This configured prefix will be added to the django username, therefore existing django users with the same username as users in the AD/LDAP can still login.
+This configured prefix will be added to the Django username, therefore existing Django users with the same username as users in the AD/LDAP can still login.
 
 ### Is it possible to have a user with readonly rights in specific business unit and with write rights in a different one?
 
-No: Unfortunately this is not possible by design of SAL. A user does always have **one** user profile which is valid for all assigned business unit.
+No: Unfortunately this is not possible by design of Sal. A user does always have **one** user profile which is valid for all assigned business unit.
 
 ### What happens if the authenticated user is not in any of the configured user profiles (GA, RW, RO)?
 
@@ -178,11 +178,11 @@ Then the default user profile is set, which is read only (RO). Defined at `UserP
 
 This is possible with business unit `#ALL_BU` in the `AUTH_LDAP_USER_TO_BUSINESS_UNIT` configuration.
 
-### Assigned business units in SAL get reset every time a user logs in?
+### Assigned business units in Sal get reset every time a user logs in?
 
 The user profile and all assigned business units of a user get a reset every time a user logs in.
 Otherwise it is not possible to ensure that users get removed from business units they shouldn't have access anymore.
-Therefore it is not possible and recommended to mix the assignment between SAL and the AD/LDAP configuration.
+Therefore it is not possible and recommended to mix the assignment between Sal and the AD/LDAP configuration.
 
 ### Does this authentication work with another ldap implementation than AD/LDAP as well?
 
@@ -418,7 +418,7 @@ class ADConnector:
         else:
             self.logger.debug('No ldap group for user profile "RO" defined in settings OR user profile already set to GA or RW.')
 
-        # SO = Stats Only (not implemented (yet?) in SAL)
+        # SO = Stats Only (not implemented (yet?) in Sal)
         #------------------------------------------------
         user_profile_groups = None # temporary variable with ldap groups
         try: # Check if setting exist
@@ -505,7 +505,7 @@ class ADConnector:
                         else:
                             self.logger.debug('User %s is NOT member of group %s.' % (ldap_username, group))
                 else:
-                    self.logger.warn('Business unit in settings (AUTH_LDAP_USER_TO_BUSINESS_UNIT) %s does not exist in existing SAL business units (%s)' %
+                    self.logger.warn('Business unit in settings (AUTH_LDAP_USER_TO_BUSINESS_UNIT) %s does not exist in existing Sal business units (%s)' %
                                      (business_unit, ''.join(all_business_units)))
         elif user_profile == 'GA':
             self.logger.debug('User %s has user profile GA (Global Admin), therefore not necessary to assign business units to the user.' % username_django)
@@ -661,7 +661,7 @@ class ADConnector:
             return False
 
 
-    # SAL Stuff - profile and business unit permissions
+    # Sal Stuff - profile and business unit permissions
     ###################################################
 
     def __set_userprofile(self, username, level):
@@ -671,7 +671,7 @@ class ADConnector:
         If the userprofile does not yet exist in the database, create it.
 
         Args:
-            username: django username
+            username: Django username
             level: GA, RW, RO, SO; has to be in the list of UserProfile.LEVEL_CHOICES
 
         Returns: Nothing
@@ -680,7 +680,7 @@ class ADConnector:
         assert str(level).upper() in dict(UserProfile.LEVEL_CHOICES).keys()
         assert username is not None
 
-        # Get django user
+        # Get Django user
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist as udne:
@@ -709,7 +709,7 @@ class ADConnector:
             business_units_names = [str(unit.name) for unit in business_units]
             self.logger.debug('All Business units: %s' % ', '.join(business_units_names))
         else:
-            # Get django user
+            # Get Django user
             try:
                 self.logger.debug('Get all business units of user %s.' % username)
                 user = User.objects.get(username=username)
@@ -728,8 +728,8 @@ class ADConnector:
         Assign business unit to user.
         If the user does not exist, raise an exception.
         Args:
-            username: django username (NOT a django user object!)
-            business_unit_name: Name of the business unit (Not a django BusinessUnit object)
+            username: Django username (NOT a Django user object!)
+            business_unit_name: Name of the business unit (Not a Django BusinessUnit object)
 
         Returns: Nothing
 
@@ -738,7 +738,7 @@ class ADConnector:
         assert username is not None
         assert business_unit_name is not None
 
-        # Get django user
+        # Get Django user
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist as udne:
@@ -754,8 +754,8 @@ class ADConnector:
         Remove business unit of user. If the business unit is not assigned to the user, the assignment can't get removed.
         If the user does not exist, raise an exception.
         Args:
-            username: django username (NOT a django user object!)
-            business_unit_name: Name of the business unit (Not a django BusinessUnit object)
+            username: Django username (NOT a Django user object!)
+            business_unit_name: Name of the business unit (Not a Django BusinessUnit object)
 
         Returns: Nothing
 
@@ -779,8 +779,8 @@ class ADConnector:
 
     def __get_or_create_django_user(self, username, first_name = None, last_name = None, email = None):
         """
-        Get or create a django user. If a dango user with the given username does already exist,
-        update the given fields and return the django user object. If a user with the given username does not yet exist,
+        Get or create a Django user. If a dango user with the given username does already exist,
+        update the given fields and return the Django user object. If a user with the given username does not yet exist,
         create a user with all given fields.
 
         Args:
@@ -789,13 +789,13 @@ class ADConnector:
             last_name:
             email:
 
-        Returns: A django user object.
+        Returns: A Django user object.
 
         """
 
         assert username is not None
 
-        self.logger.debug('Get or create django user %s (fist_name: %s, last_name: %s, email: %s)' %
+        self.logger.debug('Get or create Django user %s (fist_name: %s, last_name: %s, email: %s)' %
                           (username, first_name, last_name, email))
 
         try:
@@ -819,7 +819,7 @@ class ADConnector:
 
     # Required for your backend to work properly - unchanged in most scenarios
     def get_user(self, user_id):
-        self.logger.debug('Get django user %s' % user_id)
+        self.logger.debug('Get Django user %s' % user_id)
         try:
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
