@@ -49,7 +49,7 @@ URL of the AD/LDAP server.
 AUTH_LDAP_SERVER_URI = 'ldaps://hostname.company.com:636'
 ```
 
-## AUTH_LDAP_USER_DOMAIN
+## AUTH_LDAP_USER_DOMAIN (mandatory)
 Domain of the AD/LDAP server.
 ```Python
 AUTH_LDAP_USER_DOMAIN = 'company.com'
@@ -176,7 +176,7 @@ There are always things which can be improved!
 
 # Versions
 
-The version is identical with the version of Sal in the Dockerfile. This version of Sal is tested and proved to work with the given AD/LDAP authentication. 
+The version is identical with the version of Sal in the Dockerfile. This version of Sal is tested and proved to work with the given AD/LDAP authentication.
 
 It could be that new authentication features get introduced between different version. See the changelog below for details.
 

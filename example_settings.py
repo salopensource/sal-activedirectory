@@ -58,7 +58,7 @@ if host and port:
 
 # ActiveDirectory Connection
 AUTHENTICATION_BACKENDS = [
-    'server.ADAuthentication.ADAuthentication',
+    'server.ADConnector.ADConnector',
     'django.contrib.auth.backends.ModelBackend',
 ]
 AUTH_LDAP_SERVER_URI = 'ldaps://hostname.company.com:636'
