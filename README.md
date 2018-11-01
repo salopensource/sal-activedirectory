@@ -180,6 +180,13 @@ The version is identical with the version of Sal in the Dockerfile. This version
 
 It could be that new authentication features get introduced between different version. See the changelog below for details.
 
+## 3.3.10
+- Sal version 3.3.10 in docker container
+- [Be consistent with documentation](https://github.com/salopensource/sal-activedirectory/issues/4), make `AUTH_LDAP_TRUST_ALL_CERTIFICATES` optional. Update `AUTHENTICATION_BACKENDS` in [settings_example.py](settings_example.py)
+
+## 3.3.1
+- Sal version 3.3.1 in docker container
+
 ## 3.2.14
 - Sal version 3.2.14 in docker container
 - [Support multiple user scopes](https://github.com/haribert/sal-ActiveDirectory/issues/1)
