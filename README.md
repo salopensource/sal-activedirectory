@@ -49,7 +49,7 @@ URL of the AD/LDAP server.
 AUTH_LDAP_SERVER_URI = 'ldaps://hostname.company.com:636'
 ```
 
-## AUTH_LDAP_USER_DOMAIN
+## AUTH_LDAP_USER_DOMAIN (mandatory)
 Domain of the AD/LDAP server.
 ```Python
 AUTH_LDAP_USER_DOMAIN = 'company.com'
@@ -176,9 +176,16 @@ There are always things which can be improved!
 
 # Versions
 
-The version is identical with the version of Sal in the Dockerfile. This version of Sal is tested and proved to work with the given AD/LDAP authentication. 
+The version is identical with the version of Sal in the Dockerfile. This version of Sal is tested and proved to work with the given AD/LDAP authentication.
 
 It could be that new authentication features get introduced between different version. See the changelog below for details.
+
+## 3.3.10
+- Sal version 3.3.10 in docker container
+- [Be consistent with documentation](https://github.com/salopensource/sal-activedirectory/issues/4), make `AUTH_LDAP_TRUST_ALL_CERTIFICATES` optional. Update `AUTHENTICATION_BACKENDS` in [settings_example.py](settings_example.py)
+
+## 3.3.1
+- Sal version 3.3.1 in docker container
 
 ## 3.2.14
 - Sal version 3.2.14 in docker container
