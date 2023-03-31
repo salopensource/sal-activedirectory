@@ -234,14 +234,15 @@ class ADConnector:
     def authenticate(self, username=None, password=None):
 
         # Check if ldap server is set
-        if settings.AUTH_LDAP_SERVER_URI is None:
+        if not hasattr(settings, 'AUTH_LDAP_SERVER_URI') or settings.AUTH_LDAP_SERVER_URI is None:
             self.logger.error('AUTH_LDAP_SERVER_URI not defined in settings!')
             raise Exception("AUTH_LDAP_SERVER_URI not defined in settings!")
 
-        self.logger.info('Authenticate user %s in AD/LDAP %s' % (username, settings.AUTH_LDAP_SERVER_URI))
+        self.logger.info('Authenticate user %s in AD/LDAP %s' %
+                        (username, settings.AUTH_LDAP_SERVER_URI))
 
         # Check if authentication should trust all AD certificates
-        if settings.AUTH_LDAP_TRUST_ALL_CERTIFICATES:
+        if hasattr(settings, 'AUTH_LDAP_TRUST_ALL_CERTIFICATES') and settings.AUTH_LDAP_TRUST_ALL_CERTIFICATES:
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
 
         ldap_connection = ldap.initialize(settings.AUTH_LDAP_SERVER_URI)
@@ -824,5 +825,3 @@ class ADConnector:
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return None
-
-
